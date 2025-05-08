@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multi-User Chat</title>
+  <style>
+    body { font-family: Arial; }
+    #chat { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 5px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Welcome to Chat</h2>
+  <div>
+    <input id="username" placeholder="Enter your name">
+    <button onclick="register()">Join Chat</button>
+  </div>
+
+  <div id="chatSection" style="display:none;">
+    <div id="chat"></div>
+
+    <select id="userSelect">
+      <option value="Everyone">Everyone (Public)</option>
+    </select>
+
+    <input id="messageInput" placeholder="Type your message">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let username = '';
+
+    function register() {
+      username = document.getElementById('username').value.trim();
+      if (!username) return alert('Enter your name first');
+      socket.emit('register', username);
+      document.getElementById('chatSection').style.display = 'block';
+    }
+
+    socket.on('userList', (users) => {
+      const select = document.getElementById('userSelect');
+      select.innerHTML = '<option value="Everyone">Everyone (Public)</option>';
+      users.forEach((user) => {
+        if (user !== username) {
+          const opt = document.createElement('option');
+          opt.value = user;
+          opt.innerText = user;
+          select.appendChild(opt);
+        }
+      });
+    });
+
+    function sendMessage() {
+      const msg = document.getElementById('messageInput').value;
+      const to = document.getElementById('userSelect').value;
+      if (msg.trim()) {
+        socket.emit('chatMessage', { message: msg, to });
+        document.getElementById('messageInput').value = '';
+      }
+    }
+
+    socket.on('chatMessage', ({ from, message, to }) => {
+      const chat = document.getElementById('chat');
+      const isPrivate = to !== 'Everyone';
+      const line = document.createElement('div');
+      line.innerHTML = `<strong>${from}${isPrivate ? ' ➤ ' + to : ''}:</strong> ${message}`;
+      chat.appendChild(line);
+      chat.scrollTop = chat.scrollHeight;
+    });
+  </script>
+</body>
+</html>

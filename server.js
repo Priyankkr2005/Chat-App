@@ -5,7 +5,7 @@ const server = http.createServer(app);
 const { Server } = require('socket.io');
 const io = new Server(server);
 
-const PORT = process.env.PORT || 3000; // ✅ Use dynamic port for Render
+const PORT = process.env.PORT || 3000;
 
 const users = {}; // socket.id → username
 
